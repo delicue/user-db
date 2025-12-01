@@ -5,19 +5,22 @@ namespace App\Controllers;
 use App\Database;
 use App\Forms\AddUserForm;
 use App\Http\Route;
+use App\Log;
 use App\Session;
 use App\View;
 use Exception;
+use NoDiscard;
 
 class HomeController extends Controller {
 
     #[Route('/', 'GET')]
     public function __invoke(): string  {
-        $users = Database::fetchAll("SELECT * FROM users");
+        $users = Database::getInstance()->fetchAll("SELECT * FROM users");
         $usersCount = count($users);
         return View::render('pages/index.view', ['users' => $users, 'usersCount' => $usersCount, 'title' => 'Home Page']);
     }
 
+    #[NoDiscard('The return value should not be discarded')]
     #[Route('/get-users', 'GET')]
     public function getUsers(): string {
         $db = Database::getInstance();
@@ -38,9 +41,13 @@ class HomeController extends Controller {
             $name = $_POST['name'];
             $email = $_POST['email'];
 
-            if (AddUserForm::validate(['name' => $name, 'email' => $email])) {
-                $db = Database::getInstance();
-                
+            $db = Database::getInstance();
+            
+            $users = Database::getInstance()->fetchAll("SELECT * FROM users");
+            $userCount = count($users);
+            Log::info("Total users in database: " . $userCount);
+
+            if (AddUserForm::validate(['name' => $name, 'email' => $email, 'user_limit' => $userCount])) {
                 $stmt = $db->getConnection()->prepare("INSERT INTO users (name, email) VALUES (:name, :email)");
                 $stmt->bindParam(':name', $name);
                 $stmt->bindParam(':email', $email);
@@ -48,7 +55,7 @@ class HomeController extends Controller {
             }
             else {
 +                // Store validation errors in session before redirect
-                Session::set('form_errors', AddUserForm::$errors);
+                Session::set('form_errors', AddUserForm::getErrors());
                 throw new Exception('Validation failed: ' . implode(', ', AddUserForm::$errors));
             }
         }

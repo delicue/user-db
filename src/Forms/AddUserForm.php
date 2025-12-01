@@ -2,6 +2,7 @@
 
 namespace App\Forms;
 
+use App\Database;
 use App\Forms\Validator;
 use App\Session;
 
@@ -20,6 +21,10 @@ class AddUserForm {
             'email' => true,
             'maxLength' => 100,
         ],
+        'user_limit' => [
+            'tableName' => 'users',
+            'objectLimit' => 16,
+        ]
     ];
 
     public static function validate(array $data): bool {

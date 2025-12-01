@@ -2,6 +2,8 @@
 
 namespace App\Forms;
 
+use App\Database;
+
 class Validator {
 
     public static function validate(array $data, array $rules): array {
@@ -20,7 +22,6 @@ class Validator {
                             $errors[$field] = 'Invalid email format.';
                         }
                         break;
-                    // Additional validation rules can be added here
                     case 'minLength':
                         if (strlen($data[$field] ?? '') < $ruleValue) {
                             $errors[$field] = ucfirst($field) . " must be at least $ruleValue characters long.";
@@ -29,6 +30,11 @@ class Validator {
                     case 'maxLength':
                         if (strlen($data[$field] ?? '') > $ruleValue) {
                             $errors[$field] = ucfirst($field) . " must be no more than $ruleValue characters long.";
+                        }
+                        break;
+                    case 'objectLimit':
+                        if(isset($fieldRules['tableName']) && Database::getInstance()->fetchAll("SELECT COUNT(*) as count FROM " . $fieldRules['tableName'])[0]['count'] >= $ruleValue) {
+                            $errors['user_limit'] = 'User limit reached. Cannot add more users.';
                         }
                         break;
                 }
