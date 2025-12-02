@@ -39,7 +39,7 @@ class Database {
      * @param mixed $params
      * @return array
      */
-    public static function fetchAll($query, $params = []): array {
+    public function fetchAll($query, $params = []): array {
         $stmt = self::getInstance()
             ->getConnection()
             ->prepare($query);
@@ -54,7 +54,7 @@ class Database {
      * @param array $params
      * @return array|null
      */
-    public static function fetchOne($query, $params = []): ?array {
+    public function fetchOne($query, $params = []): ?array {
         $stmt = self::getInstance()
             ->getConnection()
             ->prepare($query);
@@ -63,18 +63,19 @@ class Database {
         return $result === false ? null : $result;
     }
 
-    public static function execute($query, $params = []): bool {
+    public function execute($query, $params = []): bool {
         $stmt = self::getInstance()->getConnection()->prepare($query);
         return $stmt->execute($params);
     }
 
-    public static function all($table): array {
+    public function all($table): array {
         $query = "SELECT * FROM :table";
         return self::fetchAll($query, [$table]);
     }
 
-    public static function count($table): int {
-        $result = self::fetchOne("SELECT COUNT(*) as count FROM :table", [$table]);
-        return $result ? (int)$result['count'] : 0;
+    public function count($table): int {
+        $stmt = self::getInstance()->getConnection()->prepare("SELECT COUNT(*) as count FROM $table");
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
     }
 }
